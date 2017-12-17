@@ -15,8 +15,10 @@
 #ifndef TOLUA_H
 #define TOLUA_H
 
+#include <toluapp/TOLUAPP_EXPORT.h>
+
 #ifndef TOLUA_API
-#define TOLUA_API extern
+#define TOLUA_API TOLUAPP_EXPORT
 #endif
 
 #define TOLUA_VERSION "tolua++-1.0.93"
