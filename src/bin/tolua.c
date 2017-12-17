@@ -12,6 +12,8 @@
 ** enhancements, or modifications.
 */
 
+// Modified by Aster Jian for Urho3D
+
 #include "tolua++.h"
 
 #include "lua.h"
@@ -22,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+// Urho3D: Add Urho3D::String Support in tolua++
 static void help (void)
 {
  fprintf(stderr,"\n"
@@ -35,7 +37,7 @@ static void help (void)
          "  -n  name : set package name; default is input file root name.\n"
          "  -p       : parse only.\n"
          "  -P       : parse and print structure information (for debug).\n"
-         "  -S       : disable support for c++ strings.\n"
+         "  -S       : disable support for urho3d strings.\n"
          "  -1       : substract 1 to operator[] index (for compatibility with tolua5).\n"
          "  -L  file : run lua file (with dofile()) before doing anything.\n"
          "  -D       : disable automatic exporting of destructors for classes that have\n"

@@ -11,6 +11,8 @@
 -- the author has no obligation to provide maintenance, support, updates,
 -- enhancements, or modifications.
 
+-- Modified by Aster Jian for Urho3D
+
 function parse_extra()
 
 	for k,v in ipairs(_extra_parameters or {}) do
@@ -48,6 +50,11 @@ function doit ()
 		_basic['string'] = 'cppstring'
 		_basic['std::string'] = 'cppstring'
 		_basic_ctype.cppstring = 'const char*'
+		
+		-- Urho3D: Add Urho3D::String Support in tolua++
+		_basic['String'] = 'urho3dstring'
+		_basic['Urho3D::String'] = 'urho3dstring'
+		_basic_ctype.urho3dstring = 'const char*'
 	end
 
 	-- proccess package

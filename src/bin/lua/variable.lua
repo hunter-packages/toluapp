@@ -9,6 +9,7 @@
 -- the author has no obligation to provide maintenance, support, updates,
 -- enhancements, or modifications.
 
+-- Modified by Aster Jian and Yao Wei Tjong for Urho3D
 
 -- Variable class
 -- Represents a extern variable or a public member of a class.
@@ -105,11 +106,13 @@ function classVariable:supcode ()
 
  local class = self:inclass()
 
-	local prop_get,prop_set
+    -- Urho3D: Fixed tolua++ bug, let it generate reference property's set code
+	local prop_type,prop_get,prop_set
 	if string.find(self.mod, 'tolua_property') then
 
 		local _,_,type = string.find(self.mod, "tolua_property__([^%s]*)")
 		type = type or "default"
+		prop_type = type
 		prop_get,prop_set = get_property_methods(type, self.name)
 		self.mod = string.gsub(self.mod, "tolua_property[^%s]*", "")
 	end
@@ -159,8 +162,24 @@ function classVariable:supcode ()
 	else
 		local push_func = get_push_function(self.type)
 		t = self.type
-		if self.ptr == '&' or self.ptr == '' then
+		-- Urho3D: Fixed tolua++ bug, let it generate reference property's set code
+		if self.ptr == '&' then
 			output('  ',push_func,'(tolua_S,(void*)&'..self:getvalue(class,static,prop_get)..',"',t,'");')
+		elseif self.ptr == '' then
+			if prop_type == nil then
+				output('  ',push_func,'(tolua_S,(void*)&'..self:getvalue(class,static,prop_get)..',"',t,'");')
+			else
+				output('  '..self.type..' tolua_ret = ('..self.type..')'..self:getvalue(class,static,prop_get)..';\n')
+				output('  #ifdef __cplusplus\n')
+				output('    void* tolua_obj = (void*)Mtolua_new(('..self.type..')(tolua_ret));\n')
+				output('    tolua_pushusertype(tolua_S,tolua_obj,"'..self.type..'");\n')
+				output('    tolua_register_gc(tolua_S,lua_gettop(tolua_S));\n')
+				output('  #else\n')
+				output('    void* tolua_obj = tolua_copy(tolua_S,(void*)&tolua_ret,sizeof('..self.type..'));\n')
+				output('    tolua_pushusertype(tolua_S,tolua_obj,"'..self.type..'");\n')
+				output('    tolua_register_gc(tolua_S,lua_gettop(tolua_S));\n')
+				output('  #endif\n')
+			end
 		else
 			output('  ',push_func,'(tolua_S,(void*)'..self:getvalue(class,static,prop_get)..',"',t,'");')
 		end
@@ -237,7 +256,12 @@ function classVariable:supcode ()
 				output(' = ')
 			end
 			if not t and ptr=='' then output('*') end
-			output('((',self.mod,self.type)
+			-- Urho3D: Fixed tolua++ bug, let it generate reference property's set code
+			if self.ptr ~= '&' then
+				output('((',self.mod,self.type)
+			else
+				output('(*(',self.mod,self.type)
+			end
 			if not t then
 				output('*')
 			end
@@ -271,12 +295,13 @@ function classVariable:register (pre)
 	end
  pre = pre or ''
  local parent = self:inmodule() or self:innamespace() or self:inclass()
- if not parent then
-  if classVariable._warning==nil then
-   warning("Mapping variable to global may degrade performance")
-   classVariable._warning = 1
-  end
- end
+-- Urho3D - suppress warnings
+-- if not parent then
+--  if classVariable._warning==nil then
+--   warning("Mapping variable to global may degrade performance")
+--   classVariable._warning = 1
+--  end
+-- end
  if self.csetname then
   output(pre..'tolua_variable(tolua_S,"'..self.lname..'",'..self.cgetname..','..self.csetname..');')
  else
