@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.2)
 
 include("cmake/HunterGate.cmake")
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.19.201.tar.gz"
-    SHA1 "50b87e69d3903c0b4d1d34609333d6ca93479e7a"
+    URL "https://github.com/ruslo/hunter/archive/v0.19.213.tar.gz"
+    SHA1 "59b2b880178bdc1e9cce83f279f1d88feefa07a2"
+    LOCAL
 )
 
 project(toluapp VERSION 1.0.93)
@@ -23,27 +24,33 @@ add_library(
 
 target_link_libraries(toluapp PUBLIC Lua::lua_lib)
 
-add_executable(
-    tolua++
-    src/bin/tolua.c
-    src/bin/toluabind.c
-)
+if(CMAKE_CROSSCOMPILING)
+  set(install_toluapp_exe "")
+else()
+  set(install_toluapp_exe tolua++)
 
-target_link_libraries(tolua++ PUBLIC toluapp)
+  add_executable(
+      tolua++
+      src/bin/tolua.c
+      src/bin/toluabind.c
+  )
 
-if(APPLE)
-  set_target_properties(
-      tolua++
-      PROPERTIES
-      INSTALL_RPATH "@executable_path/../lib"
-  )
-elseif(UNIX)
-  # Linux (?)
-  set_target_properties(
-      tolua++
-      PROPERTIES
-      INSTALL_RPATH "\$ORIGIN/../lib"
-  )
+  target_link_libraries(tolua++ PUBLIC toluapp)
+
+  if(APPLE)
+    set_target_properties(
+        tolua++
+        PROPERTIES
+        INSTALL_RPATH "@executable_path/../lib"
+    )
+  elseif(UNIX)
+    # Linux (?)
+    set_target_properties(
+        tolua++
+        PROPERTIES
+        INSTALL_RPATH "\$ORIGIN/../lib"
+    )
+  endif()
 endif()
 
 set(generated_headers "${CMAKE_CURRENT_BINARY_DIR}/generated_headers")
@@ -88,7 +95,7 @@ configure_package_config_file(
 )
 
 install(
-    TARGETS toluapp tolua++
+    TARGETS toluapp ${install_toluapp_exe}
     EXPORT "${TARGETS_EXPORT_NAME}"
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
